@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <title>사다리 타기</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">LADDER DRAW</p>
+          <h1>사다리 타기</h1>
+        </div>
+        <button id="resetButton" class="icon-button" type="button" title="처음부터 다시">
+          <span aria-hidden="true">↻</span>
+          <span class="sr-only">처음부터 다시</span>
+        </button>
+      </header>
+
+      <section class="setup-panel" aria-labelledby="setupTitle">
+        <div class="section-heading">
+          <div>
+            <p class="step-label">STEP 1</p>
+            <h2 id="setupTitle">참가자와 결과를 입력하세요</h2>
+          </div>
+          <div class="count-control" aria-label="참가자 수">
+            <button id="decreaseButton" type="button" aria-label="참가자 줄이기">−</button>
+            <strong><span id="playerCount">4</span>명</strong>
+            <button id="increaseButton" type="button" aria-label="참가자 늘리기">＋</button>
+          </div>
+        </div>
+
+        <div class="input-tables">
+          <div>
+            <h3>참가자</h3>
+            <div id="playerInputs" class="input-list"></div>
+          </div>
+          <div>
+            <h3>결과</h3>
+            <div id="resultInputs" class="input-list"></div>
+          </div>
+        </div>
+
+        <button id="generateButton" class="primary-button" type="button">
+          사다리 만들기
+        </button>
+      </section>
+
+      <section id="gamePanel" class="game-panel" aria-labelledby="gameTitle" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="step-label">STEP 2</p>
+            <h2 id="gameTitle">이름을 눌러 출발하세요</h2>
+          </div>
+          <div class="game-actions">
+            <button id="showAllButton" class="primary-small-button" type="button">
+              전체 결과 보기
+            </button>
+            <button id="shuffleButton" class="secondary-button" type="button">
+              다시 섞기
+            </button>
+          </div>
+        </div>
+
+        <div id="ladderViewport" class="ladder-viewport">
+          <div id="startButtons" class="ladder-labels top-labels"></div>
+          <canvas id="ladderCanvas" aria-label="사다리 게임판"></canvas>
+          <div id="resultLabels" class="ladder-labels bottom-labels"></div>
+        </div>
+
+        <div id="announcement" class="announcement" aria-live="polite">
+          참가자 이름을 선택하면 경로를 따라갑니다.
+        </div>
+      </section>
+
+      <section id="summaryPanel" class="summary-panel" aria-labelledby="summaryTitle" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="step-label">RESULT</p>
+            <h2 id="summaryTitle">진행 결과</h2>
+          </div>
+        </div>
+        <div id="summaryList" class="summary-list"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
