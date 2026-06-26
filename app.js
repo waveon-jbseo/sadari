@@ -1,5 +1,4 @@
 const MIN_PLAYERS = 2;
-const MAX_PLAYERS = 14;
 const COLORS = [
   "#e1533f",
   "#147d76",
@@ -19,22 +18,24 @@ function getPlayerColor(index) {
 }
 
 const state = {
-  count: 14,
+  count: 16,
   names: [
     "대표님", 
     "이사님", 
     "본부장님", 
     "사팀장님",
     "김형기책임",
-    "고수석님",
-    "육수석님",
+    "고대한수석님",
+    "육근조수석님",
     "김요환책임",
-    "박수석님",
+    "박재원수석님",
     "박종국책임",
     "이재웅책임",
     "박현우책임",
     "이삼봉책임",
-    "서정범책임"
+    "서정범책임",
+    "김경섭수석님",
+    "박성호수석님"
   ],
   results: [
     "1구역 - 사무공간 빗자루 담당 (2인)", 
@@ -45,10 +46,12 @@ const state = {
     "3구역 - HW실 담당 (2인)", 
     "4구역 - 대·소회의실 & 쇼룸 담당 (2인)", 
     "4구역 - 대·소회의실 & 쇼룸 담당 (2인)", 
-    "5구역 - 쓰레기 배출 담당 (2인)", 
-    "5구역 - 쓰레기 배출 담당 (2인)", 
+    "5구역 - 쓰레기 배출 담당 (3인)", 
+    "5구역 - 쓰레기 배출 담당 (3인)", 
+    "5구역 - 쓰레기 배출 담당 (3인)", 
     "6구역 - 탕비실 & 공용공간 정리정돈 담당 (2인)", 
     "6구역 - 탕비실 & 공용공간 정리정돈 담당 (2인)",
+    "7구역 - 삼순이 집 담당 (1인)~",
     "열외~",
     "열외~"
   ],
@@ -118,11 +121,11 @@ function renderInputs() {
   }
 
   elements.decreaseButton.disabled = state.count <= MIN_PLAYERS;
-  elements.increaseButton.disabled = state.count >= MAX_PLAYERS;
+  elements.increaseButton.disabled = false;
 }
 
 function createField(type, index, value) {
-  const row = document.createElement("label");
+  const row = document.createElement("div");
   row.className = "field-row";
 
   const number = document.createElement("span");
@@ -131,17 +134,35 @@ function createField(type, index, value) {
   const input = document.createElement("input");
   input.type = "text";
   input.value = value;
-  input.maxLength = 16;
+  input.maxLength = 60;
   input.placeholder = `${type} ${index + 1}`;
   input.setAttribute("aria-label", `${type} ${index + 1}`);
 
-  row.append(number, input);
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "remove-field-button";
+  removeButton.textContent = "−";
+  removeButton.setAttribute("aria-label", `${type} ${index + 1} 삭제`);
+  removeButton.disabled = state.count <= MIN_PLAYERS;
+  removeButton.addEventListener("click", () => removeEntry(index));
+
+  row.append(number, input, removeButton);
   return row;
 }
 
 function changeCount(amount) {
   syncInputValues();
-  state.count = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, state.count + amount));
+  state.count = Math.max(MIN_PLAYERS, state.count + amount);
+  renderInputs();
+}
+
+function removeEntry(index) {
+  if (state.count <= MIN_PLAYERS) return;
+
+  syncInputValues();
+  state.names.splice(index, 1);
+  state.results.splice(index, 1);
+  state.count -= 1;
   renderInputs();
 }
 
@@ -228,6 +249,11 @@ function generateGame() {
 function renderGameLabels() {
   elements.startButtons.innerHTML = "";
   elements.resultLabels.innerHTML = "";
+  const boardMinWidth = `${getBoardMinWidth()}px`;
+
+  elements.startButtons.style.minWidth = boardMinWidth;
+  elements.resultLabels.style.minWidth = boardMinWidth;
+  elements.canvas.style.minWidth = boardMinWidth;
 
   state.names.forEach((name, index) => {
     const button = document.createElement("button");
@@ -249,12 +275,16 @@ function renderGameLabels() {
 }
 
 function resizeCanvas() {
-  const cssWidth = Math.max(elements.canvas.clientWidth, 560);
+  const cssWidth = Math.max(elements.canvas.clientWidth, getBoardMinWidth());
   const cssHeight = 410;
   const ratio = window.devicePixelRatio || 1;
   elements.canvas.width = cssWidth * ratio;
   elements.canvas.height = cssHeight * ratio;
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+function getBoardMinWidth() {
+  return Math.max(560, state.count * 112);
 }
 
 function getGeometry() {

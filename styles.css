@@ -149,7 +149,7 @@ h3 {
 
 .field-row {
   display: grid;
-  grid-template-columns: 30px 1fr;
+  grid-template-columns: 30px minmax(0, 1fr) 34px;
   align-items: center;
   gap: 8px;
 }
@@ -175,6 +175,28 @@ h3 {
 .field-row input:focus {
   border-color: #e1533f;
   box-shadow: 0 0 0 3px rgba(225, 83, 63, 0.12);
+}
+
+.remove-field-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d4dbe4;
+  border-radius: 5px;
+  color: #7a2732;
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.remove-field-button:hover:not(:disabled) {
+  border-color: #e1533f;
+  color: #fff;
+  background: #e1533f;
+}
+
+.remove-field-button:disabled {
+  cursor: default;
+  opacity: 0.38;
 }
 
 .primary-button,
