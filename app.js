@@ -92,11 +92,25 @@ function syncInputValues() {
   );
 }
 
+function random() {
+  if (window.crypto?.getRandomValues) {
+    const values = new Uint32Array(1);
+    window.crypto.getRandomValues(values);
+    return values[0] / 4294967296;
+  }
+
+  return Math.random();
+}
+
+function randomInt(max) {
+  return Math.floor(random() * max);
+}
+
 function shuffleItems(items) {
   const shuffled = [...items];
 
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
+    const randomIndex = randomInt(index + 1);
     [shuffled[index], shuffled[randomIndex]] = [
       shuffled[randomIndex],
       shuffled[index],
@@ -167,17 +181,17 @@ function removeEntry(index) {
 }
 
 function createBridges() {
-  const rows = Math.max(10, state.count * 3);
+  const rows = Math.max(18, state.count * 6);
   const bridges = [];
 
   for (let row = 0; row < rows; row += 1) {
     const candidates = [];
     for (let column = 0; column < state.count - 1; column += 1) {
-      if (Math.random() < 0.45) candidates.push(column);
+      if (random() < 0.68) candidates.push(column);
     }
 
     const used = new Set();
-    for (const column of candidates.sort(() => Math.random() - 0.5)) {
+    for (const column of shuffleItems(candidates)) {
       if (!used.has(column) && !used.has(column + 1)) {
         bridges.push({ row, column });
         used.add(column);
@@ -187,6 +201,30 @@ function createBridges() {
   }
 
   return { rows, bridges };
+}
+
+function createMixedLadder() {
+  const attempts = Math.max(60, state.count * 5);
+  let bestLadder = null;
+  let bestScore = -Infinity;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const ladder = createBridges();
+    const paths = buildPaths(ladder.rows, ladder.bridges);
+    const samePositionCount = paths.filter((path) => path.start === path.end).length;
+    const totalDistance = paths.reduce(
+      (sum, path) => sum + Math.abs(path.start - path.end),
+      0,
+    );
+    const score = totalDistance - samePositionCount * state.count * 1.5;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestLadder = { ...ladder, paths };
+    }
+  }
+
+  return bestLadder;
 }
 
 function buildPaths(rows, bridges) {
@@ -226,10 +264,10 @@ function generateGame() {
   );
   state.shuffledResults = shuffleItems(state.results);
 
-  const ladder = createBridges();
+  const ladder = createMixedLadder();
   state.bridges = ladder.bridges;
   state.rows = ladder.rows;
-  state.paths = buildPaths(ladder.rows, ladder.bridges);
+  state.paths = ladder.paths;
   state.completed.clear();
   state.running = false;
 
