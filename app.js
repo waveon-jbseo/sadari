@@ -42,10 +42,10 @@ const state = {
     "1구역 - 사무공간 빗자루 담당 (2인)", 
     "2구역 - 사무공간 마대(물걸레) 담당 (2인)", 
     "2구역 - 사무공간 마대(물걸레) 담당 (2인)", 
-    "3구역 - HW실 담당 (2인)", 
-    "3구역 - HW실 담당 (2인)", 
-    "4구역 - 대·소회의실 & 쇼룸 담당 (2인)", 
-    "4구역 - 대·소회의실 & 쇼룸 담당 (2인)", 
+    "3구역 - 창고 담당 (2인)", 
+    "3구역 - 창고 담당 (2인)", 
+    "4구역 - 대·소회의실 & HW실 담당 (2인)", 
+    "4구역 - 대·소회의실 & HW실 담당 (2인)", 
     "5구역 - 쓰레기 배출 담당 (3인)", 
     "5구역 - 쓰레기 배출 담당 (3인)", 
     "5구역 - 쓰레기 배출 담당 (3인)", 
@@ -92,6 +92,7 @@ function syncInputValues() {
   state.results = [...elements.resultInputs.querySelectorAll("input")].map(
     (input) => input.value,
   );
+  state.count = state.names.length;
 }
 
 function random() {
@@ -123,24 +124,28 @@ function shuffleItems(items) {
 }
 
 function renderInputs() {
-  elements.playerCount.textContent = state.count;
+  state.count = state.names.length;
+  elements.playerCount.textContent = state.names.length;
   elements.playerInputs.innerHTML = "";
   elements.resultInputs.innerHTML = "";
 
-  for (let index = 0; index < state.count; index += 1) {
+  for (let index = 0; index < state.names.length; index += 1) {
     elements.playerInputs.append(
-      createField("참가자", index, state.names[index] || `참가자 ${index + 1}`),
-    );
-    elements.resultInputs.append(
-      createField("결과", index, state.results[index] || `결과 ${index + 1}`),
+      createField("name", "참가자", index, state.names[index] || `참가자 ${index + 1}`),
     );
   }
 
-  elements.decreaseButton.disabled = state.count <= MIN_PLAYERS;
+  for (let index = 0; index < state.results.length; index += 1) {
+    elements.resultInputs.append(
+      createField("result", "결과", index, state.results[index] || `결과 ${index + 1}`),
+    );
+  }
+
+  elements.decreaseButton.disabled = state.names.length <= MIN_PLAYERS;
   elements.increaseButton.disabled = false;
 }
 
-function createField(type, index, value) {
+function createField(listType, label, index, value) {
   const row = document.createElement("div");
   row.className = "field-row";
 
@@ -151,16 +156,19 @@ function createField(type, index, value) {
   input.type = "text";
   input.value = value;
   input.maxLength = 60;
-  input.placeholder = `${type} ${index + 1}`;
-  input.setAttribute("aria-label", `${type} ${index + 1}`);
+  input.placeholder = `${label} ${index + 1}`;
+  input.setAttribute("aria-label", `${label} ${index + 1}`);
 
   const removeButton = document.createElement("button");
   removeButton.type = "button";
   removeButton.className = "remove-field-button";
   removeButton.textContent = "−";
-  removeButton.setAttribute("aria-label", `${type} ${index + 1} 삭제`);
-  removeButton.disabled = state.count <= MIN_PLAYERS;
-  removeButton.addEventListener("click", () => removeEntry(index));
+  removeButton.setAttribute("aria-label", `${label} ${index + 1} 삭제`);
+  removeButton.disabled =
+    listType === "name"
+      ? state.names.length <= MIN_PLAYERS
+      : state.results.length <= MIN_PLAYERS;
+  removeButton.addEventListener("click", () => removeEntry(listType, index));
 
   row.append(number, input, removeButton);
   return row;
@@ -168,18 +176,45 @@ function createField(type, index, value) {
 
 function changeCount(amount) {
   syncInputValues();
-  state.count = Math.max(MIN_PLAYERS, state.count + amount);
+
+  if (amount > 0) {
+    const nextIndex = state.names.length + 1;
+    state.names.push(`참가자 ${nextIndex}`);
+    state.results.push(`결과 ${state.results.length + 1}`);
+  } else if (state.names.length > MIN_PLAYERS) {
+    state.names.pop();
+    if (state.results.length > MIN_PLAYERS) state.results.pop();
+  }
+
+  state.count = state.names.length;
   renderInputs();
 }
 
-function removeEntry(index) {
-  if (state.count <= MIN_PLAYERS) return;
-
+function removeEntry(listType, index) {
   syncInputValues();
-  state.names.splice(index, 1);
-  state.results.splice(index, 1);
-  state.count -= 1;
+
+  if (listType === "name") {
+    if (state.names.length <= MIN_PLAYERS) return;
+    state.names.splice(index, 1);
+    state.count = state.names.length;
+  } else {
+    if (state.results.length <= MIN_PLAYERS) return;
+    state.results.splice(index, 1);
+  }
+
   renderInputs();
+}
+
+function getPlayableResults() {
+  const results = state.results.map(
+    (result, index) => result.trim() || `결과 ${index + 1}`,
+  );
+
+  while (results.length < state.count) {
+    results.push(`결과 ${results.length + 1}`);
+  }
+
+  return shuffleItems(results).slice(0, state.count);
 }
 
 function createBridges() {
@@ -260,11 +295,12 @@ function buildPaths(rows, bridges) {
 
 function generateGame() {
   syncInputValues();
+  state.count = state.names.length;
   state.names = state.names.map((name, index) => name.trim() || `참가자 ${index + 1}`);
   state.results = state.results.map(
     (result, index) => result.trim() || `결과 ${index + 1}`,
   );
-  state.shuffledResults = shuffleItems(state.results);
+  state.shuffledResults = getPlayableResults();
 
   const ladder = createMixedLadder();
   state.bridges = ladder.bridges;
