@@ -305,7 +305,7 @@ h3 {
 #ladderCanvas {
   display: block;
   width: 100%;
-  height: 410px;
+  height: 620px;
 }
 
 .announcement {
@@ -379,11 +379,16 @@ h3 {
 
   .game-actions {
     flex-direction: column;
+    width: 100%;
   }
 
   .input-tables {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  #ladderCanvas {
+    height: 540px;
   }
 
   .summary-list {

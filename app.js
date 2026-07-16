@@ -63,6 +63,7 @@ const state = {
 };
 
 const elements = {
+  setupPanel: document.querySelector("#setupPanel"),
   playerCount: document.querySelector("#playerCount"),
   playerInputs: document.querySelector("#playerInputs"),
   resultInputs: document.querySelector("#resultInputs"),
@@ -70,6 +71,7 @@ const elements = {
   increaseButton: document.querySelector("#increaseButton"),
   generateButton: document.querySelector("#generateButton"),
   resetButton: document.querySelector("#resetButton"),
+  cancelButton: document.querySelector("#cancelButton"),
   shuffleButton: document.querySelector("#shuffleButton"),
   showAllButton: document.querySelector("#showAllButton"),
   gamePanel: document.querySelector("#gamePanel"),
@@ -272,6 +274,7 @@ function generateGame() {
   state.running = false;
 
   renderGameLabels();
+  elements.setupPanel.hidden = true;
   elements.gamePanel.hidden = false;
   elements.summaryPanel.hidden = true;
   elements.summaryList.innerHTML = "";
@@ -314,7 +317,7 @@ function renderGameLabels() {
 
 function resizeCanvas() {
   const cssWidth = Math.max(elements.canvas.clientWidth, getBoardMinWidth());
-  const cssHeight = 410;
+  const cssHeight = elements.canvas.clientHeight || 620;
   const ratio = window.devicePixelRatio || 1;
   elements.canvas.width = cssWidth * ratio;
   elements.canvas.height = cssHeight * ratio;
@@ -493,6 +496,7 @@ function showAllResults() {
 function resetGame() {
   state.completed.clear();
   state.running = false;
+  elements.setupPanel.hidden = false;
   elements.gamePanel.hidden = true;
   elements.summaryPanel.hidden = true;
   elements.summaryList.innerHTML = "";
@@ -503,6 +507,7 @@ function resetGame() {
 elements.decreaseButton.addEventListener("click", () => changeCount(-1));
 elements.increaseButton.addEventListener("click", () => changeCount(1));
 elements.generateButton.addEventListener("click", generateGame);
+elements.cancelButton.addEventListener("click", resetGame);
 elements.shuffleButton.addEventListener("click", generateGame);
 elements.showAllButton.addEventListener("click", showAllResults);
 elements.resetButton.addEventListener("click", resetGame);
