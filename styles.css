@@ -23,7 +23,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -170,6 +171,42 @@ h3 {
   padding: 0 12px;
   outline: none;
   background: #fbfcfd;
+}
+
+.field-control {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.participant-row {
+  align-items: start;
+}
+
+.participant-row > span {
+  margin-top: 13px;
+}
+
+.participant-row .remove-field-button {
+  margin-top: 4px;
+}
+
+.assignment-select {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  border: 1px solid #cbd5df;
+  border-radius: 5px;
+  padding: 0 30px 0 10px;
+  outline: none;
+  color: #44505e;
+  background: #f3f6f9;
+  font-size: 12px;
+}
+
+.assignment-select:focus {
+  border-color: #147d76;
+  box-shadow: 0 0 0 3px rgba(20, 125, 118, 0.12);
 }
 
 .field-row input:focus {

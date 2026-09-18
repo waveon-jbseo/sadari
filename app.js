@@ -20,9 +20,9 @@ function getPlayerColor(index) {
 const state = {
   count: 17,
   names: [
-    "대표님", 
-    "이사님", 
-    "본부장님", 
+    "대표님",
+    "이사님",
+    "본부장님",
     "사팀장님",
     "고대한수석님",
     "박성호수석님",
@@ -36,27 +36,28 @@ const state = {
     "박현우책임",
     "이삼봉책임",
     "서정범책임",
-    "임성진책임"
+    "임성진책임",
   ],
   results: [
-    "1구역 - 사무공간 빗자루 담당 (2인)", 
-    "1구역 - 사무공간 빗자루 담당 (2인)", 
-    "2구역 - 사무공간 마대(물걸레) 담당 (2인)", 
-    "2구역 - 사무공간 마대(물걸레) 담당 (2인)", 
-    "3구역 - 창고 담당 (2인)", 
-    "3구역 - 창고 담당 (2인)", 
-    "4구역 - 대·소회의실 & HW실 담당 (2인)", 
-    "4구역 - 대·소회의실 & HW실 담당 (2인)", 
-    "5구역 - 쓰레기 배출 담당 (3인)", 
-    "5구역 - 쓰레기 배출 담당 (3인)", 
-    "5구역 - 쓰레기 배출 담당 (3인)", 
+    "고정 - 대표님 방",
+    "고정 - 이사님 방",
+    "고정 - HW실",
+    "1구역 - 메인 사무공간 빗자루 담당 (2인)",
+    "1구역 - 메인 사무공간 빗자루 담당 (2인)",
+    "2구역 - 메인 사무공간 마대(물걸레) 담당 (2인)",
+    "2구역 - 메인 사무공간 마대(물걸레) 담당 (2인)",
+    "3구역 - 탕비실 옆 대형 창고 담당 (2인)",
+    "3구역 - 탕비실 옆 대형 창고 담당 (2인)",
+    "4구역 - 대·소회의실 담당 (2인)",
+    "4구역 - 대·소회의실 담당 (2인)",
+    "5구역 - 쓰레기 배출 담당 (2인)",
+    "5구역 - 쓰레기 배출 담당 (2인)",
     "6구역 - 탕비실 & 공용공간 정리정돈 담당 (2인)",
     "6구역 - 탕비실 & 공용공간 정리정돈 담당 (2인)",
     "7구역 - 삼순이 집 담당 (1인)",
     "8구역 - 3D 프린트실 (1인)",
-    "열외~",
-    "열외~"
   ],
+  fixedAssignments: [0, 1, null, null, 2],
   shuffledResults: [],
   bridges: [],
   paths: [],
@@ -97,6 +98,23 @@ function syncInputValues() {
   state.count = state.names.length;
 }
 
+function normalizeFixedAssignments() {
+  const usedResults = new Set();
+
+  state.fixedAssignments = state.names.map((_, playerIndex) => {
+    const resultIndex = state.fixedAssignments[playerIndex];
+    const isValid =
+      Number.isInteger(resultIndex) &&
+      resultIndex >= 0 &&
+      resultIndex < state.results.length &&
+      !usedResults.has(resultIndex);
+
+    if (!isValid) return null;
+    usedResults.add(resultIndex);
+    return resultIndex;
+  });
+}
+
 function random() {
   if (window.crypto?.getRandomValues) {
     const values = new Uint32Array(1);
@@ -127,6 +145,7 @@ function shuffleItems(items) {
 
 function renderInputs() {
   state.count = state.names.length;
+  normalizeFixedAssignments();
   elements.playerCount.textContent = state.names.length;
   elements.playerInputs.innerHTML = "";
   elements.resultInputs.innerHTML = "";
@@ -145,11 +164,12 @@ function renderInputs() {
 
   elements.decreaseButton.disabled = state.names.length <= MIN_PLAYERS;
   elements.increaseButton.disabled = false;
+  refreshAssignmentSelects();
 }
 
 function createField(listType, label, index, value) {
   const row = document.createElement("div");
-  row.className = "field-row";
+  row.className = `field-row ${listType === "name" ? "participant-row" : ""}`;
 
   const number = document.createElement("span");
   number.textContent = String(index + 1).padStart(2, "0");
@@ -160,6 +180,15 @@ function createField(listType, label, index, value) {
   input.maxLength = 60;
   input.placeholder = `${label} ${index + 1}`;
   input.setAttribute("aria-label", `${label} ${index + 1}`);
+
+  input.addEventListener("input", () => {
+    if (listType === "name") {
+      state.names[index] = input.value;
+    } else {
+      state.results[index] = input.value;
+      refreshAssignmentSelects();
+    }
+  });
 
   const removeButton = document.createElement("button");
   removeButton.type = "button";
@@ -172,8 +201,65 @@ function createField(listType, label, index, value) {
       : state.results.length <= MIN_PLAYERS;
   removeButton.addEventListener("click", () => removeEntry(listType, index));
 
-  row.append(number, input, removeButton);
+  if (listType === "name") {
+    const control = document.createElement("div");
+    control.className = "field-control";
+    control.append(input, createAssignmentSelect(index));
+    row.append(number, control, removeButton);
+  } else {
+    row.append(number, input, removeButton);
+  }
+
   return row;
+}
+
+function createAssignmentSelect(playerIndex) {
+  const select = document.createElement("select");
+  select.className = "assignment-select";
+  select.dataset.playerIndex = playerIndex;
+  select.setAttribute("aria-label", `${state.names[playerIndex] || `참가자 ${playerIndex + 1}`} 고정 결과`);
+
+  select.add(new Option("고정 없음 (랜덤)", ""));
+  state.results.forEach((result, resultIndex) => {
+    const label = result.trim() || `결과 ${resultIndex + 1}`;
+    select.add(
+      new Option(
+        `${String(resultIndex + 1).padStart(2, "0")} · ${label}`,
+        String(resultIndex),
+      ),
+    );
+  });
+
+  select.value = state.fixedAssignments[playerIndex] ?? "";
+  select.addEventListener("change", () => {
+    syncInputValues();
+    state.fixedAssignments[playerIndex] =
+      select.value === "" ? null : Number(select.value);
+    renderInputs();
+  });
+
+  return select;
+}
+
+function refreshAssignmentSelects() {
+  const usedResults = new Map();
+  state.fixedAssignments.forEach((resultIndex, playerIndex) => {
+    if (resultIndex !== null) usedResults.set(resultIndex, playerIndex);
+  });
+
+  elements.playerInputs
+    .querySelectorAll(".assignment-select")
+    .forEach((select) => {
+      const playerIndex = Number(select.dataset.playerIndex);
+      [...select.options].forEach((option, optionIndex) => {
+        if (optionIndex === 0) return;
+        const resultIndex = Number(option.value);
+        const result = state.results[resultIndex]?.trim() || `결과 ${resultIndex + 1}`;
+        option.textContent = `${String(resultIndex + 1).padStart(2, "0")} · ${result}`;
+        option.disabled =
+          usedResults.has(resultIndex) && usedResults.get(resultIndex) !== playerIndex;
+      });
+    });
 }
 
 function changeCount(amount) {
@@ -183,9 +269,17 @@ function changeCount(amount) {
     const nextIndex = state.names.length + 1;
     state.names.push(`참가자 ${nextIndex}`);
     state.results.push(`결과 ${state.results.length + 1}`);
+    state.fixedAssignments.push(null);
   } else if (state.names.length > MIN_PLAYERS) {
     state.names.pop();
-    if (state.results.length > MIN_PLAYERS) state.results.pop();
+    state.fixedAssignments.pop();
+    if (state.results.length > MIN_PLAYERS) {
+      const removedResultIndex = state.results.length - 1;
+      state.results.pop();
+      state.fixedAssignments = state.fixedAssignments.map((resultIndex) =>
+        resultIndex === removedResultIndex ? null : resultIndex,
+      );
+    }
   }
 
   state.count = state.names.length;
@@ -198,25 +292,57 @@ function removeEntry(listType, index) {
   if (listType === "name") {
     if (state.names.length <= MIN_PLAYERS) return;
     state.names.splice(index, 1);
+    state.fixedAssignments.splice(index, 1);
     state.count = state.names.length;
   } else {
     if (state.results.length <= MIN_PLAYERS) return;
     state.results.splice(index, 1);
+    state.fixedAssignments = state.fixedAssignments.map((resultIndex) => {
+      if (resultIndex === index) return null;
+      return resultIndex > index ? resultIndex - 1 : resultIndex;
+    });
   }
 
   renderInputs();
 }
 
-function getPlayableResults() {
-  const results = state.results.map(
-    (result, index) => result.trim() || `결과 ${index + 1}`,
-  );
+function getPlayableResults(paths) {
+  const resultEntries = state.results.map((result, index) => ({
+    index,
+    label: result.trim() || `결과 ${index + 1}`,
+  }));
 
-  while (results.length < state.count) {
-    results.push(`결과 ${results.length + 1}`);
+  while (resultEntries.length < state.count) {
+    resultEntries.push({
+      index: null,
+      label: `결과 ${resultEntries.length + 1}`,
+    });
   }
 
-  return shuffleItems(results).slice(0, state.count);
+  const fixedResultIndexes = new Set(
+    state.fixedAssignments.filter((resultIndex) => resultIndex !== null),
+  );
+  const remainingEntries = shuffleItems(
+    resultEntries.filter(
+      (entry) => entry.index === null || !fixedResultIndexes.has(entry.index),
+    ),
+  ).slice(0, state.count - fixedResultIndexes.size);
+  const playableResults = Array(state.count);
+
+  state.fixedAssignments.forEach((resultIndex, playerIndex) => {
+    if (resultIndex === null) return;
+    const destination = paths[playerIndex].end;
+    playableResults[destination] = resultEntries[resultIndex].label;
+  });
+
+  let remainingIndex = 0;
+  for (let destination = 0; destination < playableResults.length; destination += 1) {
+    if (playableResults[destination] !== undefined) continue;
+    playableResults[destination] = remainingEntries[remainingIndex].label;
+    remainingIndex += 1;
+  }
+
+  return playableResults;
 }
 
 function createBridges() {
@@ -298,16 +424,17 @@ function buildPaths(rows, bridges) {
 function generateGame() {
   syncInputValues();
   state.count = state.names.length;
+  normalizeFixedAssignments();
   state.names = state.names.map((name, index) => name.trim() || `참가자 ${index + 1}`);
   state.results = state.results.map(
     (result, index) => result.trim() || `결과 ${index + 1}`,
   );
-  state.shuffledResults = getPlayableResults();
 
   const ladder = createMixedLadder();
   state.bridges = ladder.bridges;
   state.rows = ladder.rows;
   state.paths = ladder.paths;
+  state.shuffledResults = getPlayableResults(ladder.paths);
   state.completed.clear();
   state.running = false;
 
