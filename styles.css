@@ -165,30 +165,33 @@ h3 {
 .field-row input {
   width: 100%;
   min-width: 0;
-  height: 42px;
+  height: 34px;
   border: 1px solid #d4dbe4;
   border-radius: 5px;
-  padding: 0 12px;
+  padding: 0 9px;
   outline: none;
   background: #fbfcfd;
+  font-size: 13px;
 }
 
 .field-control {
   display: grid;
+  grid-template-columns: minmax(76px, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
   min-width: 0;
   gap: 6px;
 }
 
 .participant-row {
-  align-items: start;
+  align-items: center;
 }
 
 .participant-row > span {
-  margin-top: 13px;
+  margin-top: 0;
 }
 
 .participant-row .remove-field-button {
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 .assignment-select {
